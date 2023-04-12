@@ -53,6 +53,7 @@ Usage:
     Thin client for interacting with running Urbit ship via conn.c
 
     options:
+        -b <path-to-vere>   Specify an undocked vere binary
         -e                  Execute jammed Hoon
         -h                  Show usage info
         -i <path-to-file>   Read input from file
