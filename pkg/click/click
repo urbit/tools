@@ -34,6 +34,7 @@ FILTER_GOOF=0
 JAM_HEX=0
 JAM_ONLY=0
 KHAN_TED=0
+EVAL_CMD=''
 
 INPUT=''
 OUTPUT=''
@@ -52,6 +53,7 @@ Usage:
     Thin client for interacting with running Urbit ship via conn.c
 
     options:
+        -b <path-to-vere>   Specify an undocked vere binary
         -e                  Execute jammed Hoon
         -h                  Show usage info
         -i <path-to-file>   Read input from file
@@ -99,8 +101,11 @@ execute() {
 OPTIND=1
 
 # parse options
-while getopts ":ehi:jko:px" OPT; do
+while getopts ":b:ehi:jko:px" OPT; do
     case "$OPT" in
+        b)
+            EVAL_CMD=$OPTARG
+            ;;
         e)
             EXECUTE=1
             ;;
@@ -201,7 +206,10 @@ DEPS=$*
 if [[ $KHAN_TED -ne 0 ]]; then
     CLICK_CMD="$CLICK_CMD -k"
 fi
-EVAL_CMD="$PIER/.run"
+# use docked binary
+if [[ -z $EVAL_CMD ]]; then
+  EVAL_CMD="$PIER/.run"
+fi
 JAM_OPTS="-n"
 CUE_OPTS="-n"
 TMP_OUT=`mktemp -q --tmpdir`
