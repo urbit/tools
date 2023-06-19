@@ -444,9 +444,6 @@ def cue(i: int):
         i >>= 1
     return cue_from_stream(s)
 
-def cue_newt(bytestream: bytes):
-    return cue(int.from_bytes(bytestream[5:], 'little'))
-
 if '__main__' == __name__:
     import doctest
     doctest.testmod()
