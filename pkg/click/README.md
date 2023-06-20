@@ -21,6 +21,13 @@ or even more conveniently:
 /path/to/click -k -i threads/poke.hoon /path/to/zod
 ```
 
+## Dependencies
+
+click requires the OpenBSD version of `netcat` (a.k.a. `netcat-openbsd`) and not
+the GNU version (a.k.a. `netcat-traditional`).
+
+## Usage
+
 ```
 Usage:
     click [options] <path-to-pier> <hoon> [<dependencies> ...]
