@@ -54,6 +54,7 @@ Usage:
 
     options:
         -b <path-to-vere>   Specify an undocked vere binary
+        -c                  Send a conn.c card to urbit ship
         -e                  Execute jammed Hoon
         -h                  Show usage info
         -i <path-to-file>   Read input from file
@@ -62,7 +63,6 @@ Usage:
         -o <path-to-file>   Output to file
         -p                  Filter failure stack traces from result and pretty-print them to stderr
         -x                  Jam to hex
-        -c                  Send a conn.c card to urbit ship
 EOF
 }
 
@@ -109,7 +109,7 @@ execute() {
 OPTIND=1
 
 # parse options
-while getopts ":b:ehi:jkoc:px" OPT; do
+while getopts ":b:cehi:jko:px" OPT; do
     case "$OPT" in
         b)
             EVAL_CMD=$OPTARG
@@ -168,9 +168,20 @@ if [[ $EXECUTE -ne 0 ]]; then
         echo "-k meaningless with -e; ignoring" >&2
     fi
 fi
+
+if [[ $KHAN_TED -ne 0 ]]; then
+    if [[ $CARD -ne 0 ]]; then
+        echo "-p meaningless with -e; ignoring" >&2
+    fi
+fi
+
 if [[ $JAM_ONLY -ne 0 ]]; then
     if [[ $FILTER_GOOF -ne 0 ]]; then
         echo "-p meaningless with -j; ignoring" >&2
+    fi
+
+    if [[ $CARD -ne 0 ]]; then
+        echo "-p meaningless with -e; ignoring" >&2
     fi
 else
     if [[ $JAM_HEX -ne 0 ]]; then
@@ -190,7 +201,7 @@ shift $((OPTIND-1))
 
 # check for mandatory input
 if [[ -n $INPUT ]]; then
-    MIN_INPUT=4
+    MIN_INPUT=1
 else
     MIN_INPUT=2
 fi
@@ -220,10 +231,6 @@ DEPS=$*
 # setup shared variables
 if [[ $KHAN_TED -ne 0 ]]; then
     CLICK_CMD="$CLICK_CMD -k"
-fi
-# setup shared variables
-if [[ $CARD -ne 0 ]]; then
-    CLICK_CMD=$HOON
 fi
 # use docked binary
 if [[ -z $EVAL_CMD ]]; then
