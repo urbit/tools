@@ -54,6 +54,7 @@ Usage:
 
     options:
         -b <path-to-vere>   Specify an undocked vere binary
+        -c                  Send a conn.c card to urbit ship
         -e                  Execute jammed Hoon
         -h                  Show usage info
         -i <path-to-file>   Read input from file
@@ -66,10 +67,6 @@ EOF
 }
 
 full() {
-    if [[ $FILTER_GOOF -ne 0 ]]; then
-        CUE_OPTS="$CUE_OPTS -k"
-    fi
-
     $CLICK_CMD "$HOON" $DEPS |
         $EVAL_CMD eval --jam $JAM_OPTS |
         nc -U -W 1 "$PIER/.urb/conn.sock" |
@@ -85,10 +82,6 @@ jam() {
 }
 
 execute() {
-    if [[ $FILTER_GOOF -ne 0 ]]; then
-        CUE_OPTS="$CUE_OPTS -k"
-    fi
-
     nc -U -W 1 "$PIER/.urb/conn.sock" < $INPUT |
         $EVAL_CMD eval --cue $CUE_OPTS
 }
@@ -101,7 +94,7 @@ execute() {
 OPTIND=1
 
 # parse options
-while getopts ":b:ehi:jko:px" OPT; do
+while getopts ":b:cehi:jko:px" OPT; do
     case "$OPT" in
         b)
             EVAL_CMD=$OPTARG
@@ -127,6 +120,9 @@ while getopts ":b:ehi:jko:px" OPT; do
         x)
             JAM_HEX=1
             ;;
+        c)
+            CARD=1
+            ;;
         \?)
             echo "Invalid option: -$OPTARG" >&2
             STATUS=1
@@ -144,15 +140,27 @@ if [[ $EXECUTE -ne 0 ]]; then
         echo "Invalid option: cannot mix -e and -j" >&2
         STATUS=1
     fi
+
     if [[ -z $INPUT ]]; then
         echo "Invalid option: -e requires -i" >&2
         STATUS=1
+    fi
+
+    if [[ $CARD -ne 0 ]]; then
+        echo "-c meaningless with -e; ignoring" >&2
     fi
 
     if [[ $KHAN_TED -ne 0 ]]; then
         echo "-k meaningless with -e; ignoring" >&2
     fi
 fi
+
+if [[ $KHAN_TED -ne 0 ]]; then
+    if [[ $CARD -ne 0 ]]; then
+        echo "-k meaningless with -c; ignoring" >&2
+    fi
+fi
+
 if [[ $JAM_ONLY -ne 0 ]]; then
     if [[ $FILTER_GOOF -ne 0 ]]; then
         echo "-p meaningless with -j; ignoring" >&2
@@ -205,6 +213,9 @@ DEPS=$*
 # setup shared variables
 if [[ $KHAN_TED -ne 0 ]]; then
     CLICK_CMD="$CLICK_CMD -k"
+elif [[ $CARD -ne 0 ]]; then
+    CLICK_CMD="echo"
+    DEPS=""
 fi
 # use docked binary
 if [[ -z $EVAL_CMD ]]; then
@@ -213,6 +224,12 @@ fi
 JAM_OPTS="-n"
 CUE_OPTS="-n"
 TMP_OUT=`mktemp -q --tmpdir`
+
+if [[ $JAM_ONLY -eq 0 ]]; then
+    if [[ $FILTER_GOOF -ne 0 ]]; then
+        CUE_OPTS="$CUE_OPTS -k"
+    fi
+fi
 
 # main logic
 {
