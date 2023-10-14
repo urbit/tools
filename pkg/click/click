@@ -67,18 +67,7 @@ EOF
 }
 
 full() {
-    if [[ $FILTER_GOOF -ne 0 ]]; then
-        CUE_OPTS="$CUE_OPTS -k"
-    fi
-
     $CLICK_CMD "$HOON" $DEPS |
-        $EVAL_CMD eval --jam $JAM_OPTS |
-        nc -U -W 1 "$PIER/.urb/conn.sock" |
-        $EVAL_CMD eval --cue $CUE_OPTS
-}
-
-card() {
-    echo $HOON | 
         $EVAL_CMD eval --jam $JAM_OPTS |
         nc -U -W 1 "$PIER/.urb/conn.sock" |
         $EVAL_CMD eval --cue $CUE_OPTS
@@ -93,10 +82,6 @@ jam() {
 }
 
 execute() {
-    if [[ $FILTER_GOOF -ne 0 ]]; then
-        CUE_OPTS="$CUE_OPTS -k"
-    fi
-
     nc -U -W 1 "$PIER/.urb/conn.sock" < $INPUT |
         $EVAL_CMD eval --cue $CUE_OPTS
 }
@@ -155,6 +140,7 @@ if [[ $EXECUTE -ne 0 ]]; then
         echo "Invalid option: cannot mix -e and -j" >&2
         STATUS=1
     fi
+
     if [[ -z $INPUT ]]; then
         echo "Invalid option: -e requires -i" >&2
         STATUS=1
@@ -171,17 +157,13 @@ fi
 
 if [[ $KHAN_TED -ne 0 ]]; then
     if [[ $CARD -ne 0 ]]; then
-        echo "-p meaningless with -e; ignoring" >&2
+        echo "-k meaningless with -c; ignoring" >&2
     fi
 fi
 
 if [[ $JAM_ONLY -ne 0 ]]; then
     if [[ $FILTER_GOOF -ne 0 ]]; then
         echo "-p meaningless with -j; ignoring" >&2
-    fi
-
-    if [[ $CARD -ne 0 ]]; then
-        echo "-p meaningless with -e; ignoring" >&2
     fi
 else
     if [[ $JAM_HEX -ne 0 ]]; then
@@ -231,6 +213,9 @@ DEPS=$*
 # setup shared variables
 if [[ $KHAN_TED -ne 0 ]]; then
     CLICK_CMD="$CLICK_CMD -k"
+elif [[ $CARD -ne 0 ]]; then
+    CLICK_CMD="echo"
+    DEPS=""
 fi
 # use docked binary
 if [[ -z $EVAL_CMD ]]; then
@@ -240,14 +225,18 @@ JAM_OPTS="-n"
 CUE_OPTS="-n"
 TMP_OUT=`mktemp -q --tmpdir`
 
+if [[ $JAM_ONLY -eq 0 ]]; then
+    if [[ $FILTER_GOOF -ne 0 ]]; then
+        CUE_OPTS="$CUE_OPTS -k"
+    fi
+fi
+
 # main logic
 {
     if [[ $EXECUTE -ne 0 ]]; then
         execute
     elif [[ $JAM_ONLY -ne 0 ]]; then
         jam
-    elif [[ $CARD -ne 0 ]]; then
-        card
     else
         full
     fi
