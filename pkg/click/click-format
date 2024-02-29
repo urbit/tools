@@ -100,7 +100,7 @@ while getopts ":hk" OPT; do
         \?)
             echo "Invalid option: -$OPTARG" >&2
             STATUS=1
-            ;&
+            ;;
         h)
             show_help
             exit "$STATUS"
