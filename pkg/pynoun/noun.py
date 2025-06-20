@@ -3,7 +3,7 @@ Urbit nouns with mug, jam, and cue.
 """
 
 import mmh3
-from bitstream import BitStream
+from bitstring import BitArray
 
 def byte_length(i: int):
     """how many bytes to represent i?
@@ -276,13 +276,13 @@ def parse(s: str):
     end_atom()
     return end_cell()
 
-def jam_to_stream(n: noun, out: BitStream):
+def jam_to_stream(n: noun, out: BitArray):
     """jam but put the bits into a stream
 
-    >>> s = BitStream()
+    >>> s = BitArray()
     >>> jam_to_stream(Cell(0,0), s)
     >>> s
-    100101
+    BitArray('0b100101')
     """
 
     cur = 0
@@ -290,7 +290,7 @@ def jam_to_stream(n: noun, out: BitStream):
 
     def bit(b: bool):
         nonlocal cur
-        out.write(b, bool)
+        out.append([b])
         cur += 1
 
     def zero():
@@ -302,7 +302,7 @@ def jam_to_stream(n: noun, out: BitStream):
     def bits(num: int, count: int):
         nonlocal cur
         for i in range(0, count):
-            out.write(0 != (num & (1 << i)), bool)
+            out.append([(num & (1 << i)) != 0])
         cur += count
 
     def save(a: noun):
@@ -350,20 +350,17 @@ def jam_to_stream(n: noun, out: BitStream):
             mat(a)
     r(n)
 
-def read_int(length: int, s: BitStream):
+def read_int(length: int, s: BitArray):
     """read length bits from s and make a python integer.
 
-    >>> s = BitStream()
-    >>> s.write(False, bool)
-    >>> s.write(False, bool)
-    >>> s.write(True, bool)
+    >>> s = BitArray('0b001')
     >>> read_int(3, s)
     4
     """
 
     r = 0
     for i in range(0, length):
-        r |= s.read(bool) << i
+        r |= (1 if s[i] else 0) << i
     return r
 
 def jam(n: noun):
@@ -378,32 +375,37 @@ def jam(n: noun):
     22840095095806892874257389573
     """
 
-    out = BitStream()
+    out = BitArray()
     jam_to_stream(n, out)
     return read_int(len(out), out)
 
-def cue_from_stream(s: BitStream):
+def cue_from_stream(s: BitArray):
     """cue but read the bits from a stream
 
-    >>> s = BitStream()
-    >>> s.write(False, bool)
-    >>> s.write(True, bool)
+    >>> s = BitArray('0b01')
     >>> cue_from_stream(s)
     0
     """
 
     refs = {}
     cur = 0
+    position = 0
 
     def bits(n: int):
-        nonlocal cur
+        nonlocal cur, position
         cur += n
-        return read_int(n, s)
+        result = 0
+        for i in range(n):
+            result |= (1 if s[position] else 0) << i
+            position += 1
+        return result
 
     def one():
-        nonlocal cur
+        nonlocal cur, position
         cur += 1
-        return s.read(bool)
+        bit = s[position]
+        position += 1
+        return bit
     
     def rub():
         z = 0
@@ -438,11 +440,11 @@ def cue(i: int):
     '[[1234567890987654321 1234567890987654321] 1234567890987654321 1234567890987654321]'
     """
 
-    s = BitStream()
+    bits = BitArray()
     while i > 0:
-        s.write(i & 1, bool)
+        bits.append([i & 1 == 1])
         i >>= 1
-    return cue_from_stream(s)
+    return cue_from_stream(bits)
 
 if '__main__' == __name__:
     import doctest
