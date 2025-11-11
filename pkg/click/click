@@ -201,7 +201,7 @@ if [[ -n $INPUT ]]; then
 
     if [[ $EXECUTE -eq 0 ]]; then
         # read from file, escape 's, replace newlines w/ gaps
-        HOON="$(cat $INPUT | sed "s;';\\\\';g" | sed ':a;N;s/\n/  /;$!ba')"
+        HOON="$(cat "$INPUT" | sed "s;';\\\\';g" | tr '\n' ' ' | sed 's/ /  /g')"
     fi
 else
     PIER=$1
