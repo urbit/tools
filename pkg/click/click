@@ -69,7 +69,7 @@ EOF
 full() {
     $CLICK_CMD "$HOON" $DEPS |
         $EVAL_CMD eval --jam $JAM_OPTS |
-        nc -U -W 1 "$PIER/.urb/conn.sock" |
+        ncat -U --wait 1 "$PIER/.urb/conn.sock" |
         $EVAL_CMD eval --cue $CUE_OPTS
 }
 
@@ -82,7 +82,7 @@ jam() {
 }
 
 execute() {
-    nc -U -W 1 "$PIER/.urb/conn.sock" < $INPUT |
+    ncat -U --wait 1 "$PIER/.urb/conn.sock" < $INPUT |
         $EVAL_CMD eval --cue $CUE_OPTS
 }
 
