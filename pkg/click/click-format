@@ -97,13 +97,14 @@ while getopts ":hk" OPT; do
         k)
             THREAD=$KHAN_TED
             ;;
-        \?)
-            echo "Invalid option: -$OPTARG" >&2
-            STATUS=1
-            ;&
         h)
             show_help
-            exit "$STATUS"
+            exit 0
+            ;;
+        \?)
+            echo "Invalid option: -$OPTARG" >&2
+            show_help
+            exit 1
             ;;
   esac
 done
@@ -124,8 +125,10 @@ if [[ $# -eq 1 ]]; then
 else
     TED_IN="'$1'"
     shift
-    TED_IN="[$MARK_IN [$TED_IN [$* ~]]]"
+    # Join remaining args with space, preserving internal spaces
+    DEPS_STR="$*"
+    TED_IN="[$MARK_IN [$TED_IN [$DEPS_STR ~]]]"
 fi
 
 # format command
-echo "[$RID $COMMAND [$DESK $THREAD $MARK_OUT $TED_IN]]"
+printf "%s\n" "[$RID $COMMAND [$DESK $THREAD $MARK_OUT $TED_IN]]"
